@@ -22,7 +22,7 @@ from planet_wars import PlanetWars, finish_turn
 # of winning against all the 5 opponent bots
 def setup_behavior_tree():
     # Top-down construction of behavior tree
-    root = Selector(name='High Level Ordering of Strategies')
+    root = Sequence(name='High Level Ordering of Strategies')
     # defense
     '''
     # original code:
@@ -40,10 +40,19 @@ def setup_behavior_tree():
     
     '''
     steal_sequence = Sequence(name='STEAL STEAL STEAL')
+    enemey_attack_check = Check(enemy_sent_fleets)
     s = Action(steal)
-    steal_sequence.child_nodes = [s]
+    s1 = Action(steal_defend)
+    steal_sequence.child_nodes = [enemey_attack_check, s, s1]
     
-    root.child_nodes = [steal_sequence]
+    offensive_plan = Sequence(name='Offensive Strategy') # sequence = ordered set
+    largest_fleet_check = Check(have_largest_fleet)
+    owns_most_planets_check = Check(owns_most_planets)
+    attack = Action(attack_weakest_enemy_planet)
+    attack2 = Action(have_most_troops)
+    offensive_plan.child_nodes = [largest_fleet_check, attack, owns_most_planets_check, attack2]
+
+    root.child_nodes = [steal_sequence, offensive_plan]
     logging.info('\n' + root.tree_to_string())
     return root
 
@@ -55,6 +64,7 @@ if __name__ == '__main__':
     logging.basicConfig(filename=__file__[:-3] + '.log', filemode='w', level=logging.DEBUG)
 
     behavior_tree = setup_behavior_tree()
+
     try:
         map_data = ''
         while True:
