@@ -10,8 +10,15 @@ def best_send(state,destination,enemy):
     costs = dict()
     enemy_distance = enemy.turns_remaining
     my_planets = iter(sorted(state.my_planets(), key=lambda p: p.num_ships, reverse=True))
+    # checks if we are under attack
+    planets_under_attack = []
+    for fleet in state.enemy_fleets():
+        planets_under_attack.append(fleet.destination_planet)
+    
     for planet in my_planets: 
         # not enough ships to win over the planet
+        if planet.ID in planets_under_attack:
+            continue
         if planet.num_ships < 3:
             continue
 
@@ -35,9 +42,15 @@ def best_send(state,destination,enemy):
 def best_desend(state,destination,enemy):
     costs = dict()
     enemy_distance = enemy.turns_remaining
+    # checks if we are under attack
+    planets_under_attack = []
+    for fleet in state.enemy_fleets():
+        planets_under_attack.append(fleet.destination_planet)
 
     my_planets = iter(sorted(state.my_planets(), key=lambda p: p.num_ships, reverse=True))
     for planet in my_planets: 
+        if planet.ID in planets_under_attack:
+            continue
         # not enough ships to win over the planet
         if planet.num_ships < 3:
             continue
@@ -46,18 +59,22 @@ def best_desend(state,destination,enemy):
         difference_distance = my_distance - enemy_distance
         if destination.num_ships + destination.growth_rate * enemy_distance <= enemy.num_ships:
             if difference_distance < 1: # < 1 so we get there a turn after # we are closer to the opponent
+                
                 cost = enemy.num_ships - destination.num_ships - destination.growth_rate * enemy_distance + 1
+                # 13 - 7 + 6
             else:
                 # num of attacking ships - num of defending ships
-                num_defend = destination.num_ships + destination.growth_rate * enemy_distance
-                num_offense = enemy.num_ships + difference_distance * destination.growth_rate
+                num_defend = destination.num_ships + destination.growth_rate * enemy_distance # 8 + 1*
+                num_offense = enemy.num_ships + difference_distance * destination.growth_rate # 12 + 3*1 = 
                 cost = num_offense - num_defend + 1
+                
 
         else:
             continue
         costs[planet] = cost
 
     if costs:
+        
         smallest_planet = min(costs, key=costs.get)
         return smallest_planet, costs[smallest_planet]
 
